@@ -1,0 +1,20 @@
+apiVersion: v2
+name: kube-rightsizer
+description: >-
+  A kubebuilder controller that computes p95-based Kubernetes resource
+  right-sizing recommendations from Prometheus usage history and opens
+  GitOps pull requests instead of mutating live objects.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - kubernetes
+  - finops
+  - cost-optimization
+  - vpa
+  - gitops
+home: https://github.com/kushagrasikka/kube-rightsizer
+sources:
+  - https://github.com/kushagrasikka/kube-rightsizer
+maintainers:
+  - name: kube-rightsizer maintainers

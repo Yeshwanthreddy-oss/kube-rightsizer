@@ -1,0 +1,31 @@
+apiVersion: rightsizer.slate.dev/v1alpha1
+kind: ResourcePolicy
+metadata:
+  name: default
+  namespace: shop
+spec:
+  window: "7d"
+  minSamples: 200
+  changeThresholdPercent: 10
+  cpu:
+    percentile: 95
+    headroomPercent: 15
+    limitMultiplier: "2"
+    minRequest: "20m"
+    maxRequest: "4000m"
+  memory:
+    percentile: 95
+    headroomPercent: 20
+    limitMultiplier: "1.5"
+    minRequest: "64Mi"
+    maxRequest: "8Gi"
+  exclusions:
+    - workload: checkout-api
+      container: sidecar-proxy
+  gitOps:
+    repo: shop/gitops-manifests
+    baseBranch: main
+    manifestPath: apps/shop
+    prLabels:
+      - rightsizer
+      - automated

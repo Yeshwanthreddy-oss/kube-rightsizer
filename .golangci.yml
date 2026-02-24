@@ -1,0 +1,21 @@
+run:
+  timeout: 5m
+  build-tags:
+    - envtest
+
+linters:
+  disable-all: true
+  enable:
+    - govet
+    - staticcheck
+    - errcheck
+    - ineffassign
+    - unused
+    - gosimple
+
+issues:
+  exclude-dirs:
+    - config
+    - charts
+    - dashboards
+    - hack
