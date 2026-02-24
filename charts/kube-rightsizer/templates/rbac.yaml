@@ -1,0 +1,37 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "kube-rightsizer.fullname" . }}-manager-role
+  labels:
+    {{- include "kube-rightsizer.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["rightsizer.slate.dev"]
+    resources: ["resourcepolicies"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["rightsizer.slate.dev"]
+    resources: ["resourcepolicies/status"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "kube-rightsizer.fullname" . }}-manager-rolebinding
+  labels:
+    {{- include "kube-rightsizer.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "kube-rightsizer.fullname" . }}-manager-role
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "kube-rightsizer.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}

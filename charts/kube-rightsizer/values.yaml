@@ -1,0 +1,49 @@
+# Default values for kube-rightsizer.
+
+image:
+  repository: ghcr.io/kushagrasikka/kube-rightsizer
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+# Address of the Prometheus (or compatible: Thanos, Mimir, etc.) server the
+# controller reads container usage history from.
+prometheus:
+  address: "http://prometheus-server.monitoring.svc:9090"
+
+# GitHub token used to open GitOps pull requests. Prefer supplying this via
+# an existing Secret (githubTokenSecretName) over plaintext values.
+github:
+  tokenSecretName: "kube-rightsizer-github-token"
+  tokenSecretKey: "token"
+
+gitAuthor:
+  name: "kube-rightsizer"
+  email: "kube-rightsizer@users.noreply.github.com"
+
+leaderElection:
+  enabled: true
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+metrics:
+  port: 8080
+
+healthProbe:
+  port: 8081
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

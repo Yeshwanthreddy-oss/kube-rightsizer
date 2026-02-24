@@ -1,0 +1,25 @@
+apiVersion: rightsizer.slate.dev/v1alpha1
+kind: ResourcePolicy
+metadata:
+  name: default
+  namespace: shop
+spec:
+  window: "1h" # short window so the kind demo doesn't need to wait days
+  minSamples: 3
+  changeThresholdPercent: 10
+  workloadSelector:
+    matchLabels:
+      rightsizer: "on"
+  cpu:
+    percentile: 95
+    headroomPercent: 20
+    limitMultiplier: "2"
+    minRequest: "20m"
+  memory:
+    percentile: 95
+    headroomPercent: 25
+    limitMultiplier: "1.5"
+    minRequest: "32Mi"
+  # No gitOps target configured: this demo runs in dry-run mode. Set
+  # spec.gitOps.repo (and export GITHUB_TOKEN for the manager) to see a real
+  # pull request opened against a GitOps manifests repo.
