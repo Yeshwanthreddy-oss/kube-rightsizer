@@ -1,0 +1,175 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: resourcepolicies.rightsizer.slate.dev
+spec:
+  group: rightsizer.slate.dev
+  names:
+    kind: ResourcePolicy
+    listKind: ResourcePolicyList
+    plural: resourcepolicies
+    singular: resourcepolicy
+    shortNames:
+      - rpol
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Window
+          type: string
+          jsonPath: .spec.window
+        - name: Suspend
+          type: boolean
+          jsonPath: .spec.suspend
+        - name: Last Reconcile
+          type: string
+          jsonPath: .status.lastReconcileTime
+      schema:
+        openAPIV3Schema:
+          type: object
+          description: >-
+            ResourcePolicy configures continuous, safe resource right-sizing
+            for the Deployments it selects: how much historical usage to look
+            at, how much safety headroom to keep, and where to send the
+            resulting GitOps pull request.
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              type: object
+              properties:
+                namespaceSelector:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                workloadSelector:
+                  type: object
+                  x-kubernetes-preserve-unknown-fields: true
+                window:
+                  type: string
+                  default: "7d"
+                minSamples:
+                  type: integer
+                  default: 10
+                changeThresholdPercent:
+                  type: integer
+                  default: 10
+                suspend:
+                  type: boolean
+                  default: false
+                cpu:
+                  type: object
+                  properties:
+                    percentile:
+                      type: integer
+                      minimum: 1
+                      maximum: 100
+                      default: 95
+                    headroomPercent:
+                      type: integer
+                      minimum: 0
+                      maximum: 500
+                      default: 15
+                    limitMultiplier:
+                      type: string
+                      default: "2"
+                    minRequest:
+                      type: string
+                    maxRequest:
+                      type: string
+                memory:
+                  type: object
+                  properties:
+                    percentile:
+                      type: integer
+                      minimum: 1
+                      maximum: 100
+                      default: 95
+                    headroomPercent:
+                      type: integer
+                      minimum: 0
+                      maximum: 500
+                      default: 15
+                    limitMultiplier:
+                      type: string
+                      default: "2"
+                    minRequest:
+                      type: string
+                    maxRequest:
+                      type: string
+                exclusions:
+                  type: array
+                  items:
+                    type: object
+                    required: [workload]
+                    properties:
+                      workload:
+                        type: string
+                      container:
+                        type: string
+                gitOps:
+                  type: object
+                  required: [repo]
+                  properties:
+                    repo:
+                      type: string
+                      description: '"owner/name" of the GitHub repository holding the GitOps manifests.'
+                    baseBranch:
+                      type: string
+                      default: "main"
+                    manifestPath:
+                      type: string
+                      default: "."
+                    prLabels:
+                      type: array
+                      items:
+                        type: string
+            status:
+              type: object
+              properties:
+                observedGeneration:
+                  type: integer
+                  format: int64
+                lastReconcileTime:
+                  type: string
+                  format: date-time
+                lastPullRequestURL:
+                  type: string
+                recommendations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      workload:
+                        type: string
+                      container:
+                        type: string
+                      currentCPURequest:
+                        type: string
+                      currentMemRequest:
+                        type: string
+                      recommendedCPURequest:
+                        type: string
+                      recommendedCPULimit:
+                        type: string
+                      recommendedMemRequest:
+                        type: string
+                      recommendedMemLimit:
+                        type: string
+                      sampleCount:
+                        type: integer
+                      changePercent:
+                        type: integer
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    x-kubernetes-preserve-unknown-fields: true
