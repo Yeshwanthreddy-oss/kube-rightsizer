@@ -1,0 +1,151 @@
+{
+  "title": "kube-rightsizer: Waste vs Actual Usage",
+  "uid": "kube-rightsizer-waste",
+  "schemaVersion": 39,
+  "timezone": "utc",
+  "time": { "from": "now-7d", "to": "now" },
+  "refresh": "5m",
+  "templating": {
+    "list": [
+      {
+        "name": "namespace",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "query": "label_values(kube_pod_container_resource_requests{resource=\"cpu\"}, namespace)",
+        "refresh": 2,
+        "includeAll": true
+      },
+      {
+        "name": "workload",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "query": "label_values(kube_pod_container_resource_requests{namespace=~\"$namespace\"}, pod)",
+        "refresh": 2,
+        "includeAll": true
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "CPU: Requested vs p95 Actual Usage (millicores)",
+      "type": "timeseries",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10 } },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "requested - {{pod}}",
+          "expr": "sum by (pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\", pod=~\"$workload.*\", resource=\"cpu\"}) * 1000"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "p95 actual - {{pod}}",
+          "expr": "quantile_over_time(0.95, sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod=~\"$workload.*\"}[5m]))[7d:5m]) * 1000"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Memory: Requested vs p95 Actual Usage (bytes)",
+      "type": "timeseries",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": { "unit": "bytes", "custom": { "drawStyle": "line", "fillOpacity": 10 } },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "requested - {{pod}}",
+          "expr": "sum by (pod) (kube_pod_container_resource_requests{namespace=~\"$namespace\", pod=~\"$workload.*\", resource=\"memory\"})"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "p95 actual - {{pod}}",
+          "expr": "quantile_over_time(0.95, sum by (pod) (container_memory_working_set_bytes{namespace=~\"$namespace\", pod=~\"$workload.*\"})[7d:5m])"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Estimated Wasted CPU Requests (%)",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 9 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 30 },
+              { "color": "red", "value": 50 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * (1 - (quantile_over_time(0.95, sum(rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", pod=~\"$workload.*\"}[5m]))[7d:5m]) / sum(kube_pod_container_resource_requests{namespace=~\"$namespace\", pod=~\"$workload.*\", resource=\"cpu\"})))"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Estimated Wasted Memory Requests (%)",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 9 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 30 },
+              { "color": "red", "value": 50 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * (1 - (quantile_over_time(0.95, sum(container_memory_working_set_bytes{namespace=~\"$namespace\", pod=~\"$workload.*\"})[7d:5m]) / sum(kube_pod_container_resource_requests{namespace=~\"$namespace\", pod=~\"$workload.*\", resource=\"memory\"})))"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "kube-rightsizer Reconcile Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 9 },
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "targets": [
+        {
+          "refId": "A",
+          "legendFormat": "reconciles/sec",
+          "expr": "sum(rate(controller_runtime_reconcile_total{controller=\"resourcepolicy\"}[5m]))"
+        },
+        {
+          "refId": "B",
+          "legendFormat": "errors/sec",
+          "expr": "sum(rate(controller_runtime_reconcile_errors_total{controller=\"resourcepolicy\"}[5m]))"
+        }
+      ]
+    }
+  ]
+}
