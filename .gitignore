@@ -1,0 +1,26 @@
+# Build artifacts
+/bin/
+/dist/
+/manager
+
+# Go
+*.test
+*.out
+vendor/
+
+# envtest downloaded binaries
+/testbin/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+
+# Local env / secrets
+.env
+*.local.yaml
+
+# kind
+kubeconfig*
